@@ -1,1 +1,1 @@
-from .models import Domain, Project, Task, TaskStatus, ProjectStatus, TaskPriority
+from .models import Domain, Project, Task, TaskStatus, ProjectStatus, TaskPriority, TaskIntent

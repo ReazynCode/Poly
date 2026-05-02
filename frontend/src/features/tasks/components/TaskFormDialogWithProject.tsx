@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { Project, Task, TaskCreate, TaskStatus, TaskPriority } from '@/types';
+import type { Project, Task, TaskCreate, TaskStatus, TaskPriority, TaskIntent } from '@/types';
 
 interface TaskFormDialogWithProjectProps {
   open: boolean;
@@ -42,6 +42,7 @@ export function TaskFormDialogWithProject({
   const [description, setDescription] = useState('');
   const [projectId, setProjectId] = useState<number | null>(null);
   const [status, setStatus] = useState<TaskStatus>('pending');
+  const [intent, setIntent] = useState<TaskIntent>('work');
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [url, setUrl] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -55,6 +56,7 @@ export function TaskFormDialogWithProject({
         setDescription(task.description || '');
         setProjectId(task.project_id);
         setStatus(task.status);
+        setIntent(task.intent);
         setPriority(task.priority);
         setUrl(task.url || '');
         setDueDate(task.due_date ? task.due_date.split('T')[0] : '');
@@ -63,12 +65,25 @@ export function TaskFormDialogWithProject({
         setDescription('');
         setProjectId(projects.length > 0 ? projects[0].id : null);
         setStatus('pending');
+        setIntent('work');
         setPriority('medium');
         setUrl('');
         setDueDate('');
       }
     }
   }, [open, task, projects]);
+
+  // Check if form has actual changes (dirty tracking)
+  const hasChanges = isEditing
+    ? title.trim() !== task?.title ||
+      (description.trim() || null) !== (task?.description || null) ||
+      projectId !== task?.project_id ||
+      status !== task?.status ||
+      intent !== task?.intent ||
+      priority !== task?.priority ||
+      (url.trim() || null) !== (task?.url || null) ||
+      (dueDate || null) !== (task?.due_date?.split('T')[0] || null)
+    : true; // For new tasks, always allow submit if title exists
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,8 +93,9 @@ export function TaskFormDialogWithProject({
       title: title.trim(),
       description: description.trim() || undefined,
       status,
+      intent,
       priority,
-      url: url.trim() || undefined,
+      url: intent === 'passive' ? url.trim() || undefined : undefined,
       due_date: dueDate || undefined,
       project_id: projectId,
       domain_id: domainId,
@@ -114,29 +130,50 @@ export function TaskFormDialogWithProject({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="intent">Task Type</Label>
+            <Select value={intent} onValueChange={(v) => setIntent(v as TaskIntent)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="passive">
+                  📺 Passive Learning (watch, read, listen)
+                </SelectItem>
+                <SelectItem value="work">
+                  🛠️ Work Task (build, practice, create)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Watch intro video"
+              placeholder={intent === 'passive'
+                ? "e.g., Watch 3Blue1Brown neural network video"
+                : "e.g., Build a simple neural network"}
               required
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="url">Content URL (optional)</Label>
-            <Input
-              id="url"
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://youtube.com/watch?v=... or article URL"
-            />
-            <p className="text-xs text-muted-foreground">
-              Add a YouTube video, article, or other learning resource
-            </p>
-          </div>
+          {intent === 'passive' && (
+            <div className="space-y-2">
+              <Label htmlFor="url">Content URL</Label>
+              <Input
+                id="url"
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=... or article URL"
+              />
+              <p className="text-xs text-muted-foreground">
+                YouTube videos will show a thumbnail preview
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="description">Notes (optional)</Label>
@@ -144,7 +181,9 @@ export function TaskFormDialogWithProject({
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Key takeaways, questions, or notes..."
+              placeholder={intent === 'passive'
+                ? "Key takeaways or timestamps..."
+                : "What needs to be done?"}
               rows={2}
             />
           </div>
@@ -199,10 +238,12 @@ export function TaskFormDialogWithProject({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !title.trim() || !projectId}>
+            <Button type="submit" disabled={isSubmitting || !title.trim() || !projectId || !hasChanges}>
               {isSubmitting
                 ? isEditing ? 'Saving...' : 'Creating...'
-                : isEditing ? 'Save Changes' : 'Create Task'}
+                : isEditing
+                  ? hasChanges ? 'Save Changes' : 'No Changes'
+                  : 'Create Task'}
             </Button>
           </DialogFooter>
         </form>

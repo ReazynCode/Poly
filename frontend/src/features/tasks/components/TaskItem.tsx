@@ -2,7 +2,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { parseUrl } from '@/lib/url-utils';
-import type { Task, TaskPriority } from '@/types';
+import type { Task, TaskPriority, TaskIntent } from '@/types';
 
 const priorityVariants: Record<TaskPriority, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   low: 'secondary',
@@ -18,6 +18,19 @@ const priorityLabels: Record<TaskPriority, string> = {
   urgent: 'Urgent',
 };
 
+const intentStyles: Record<TaskIntent, { label: string; icon: string; className: string }> = {
+  passive: {
+    label: 'Passive',
+    icon: '📺',
+    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  },
+  work: {
+    label: 'Work',
+    icon: '🛠️',
+    className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  },
+};
+
 interface TaskItemProps {
   task: Task;
   onComplete: (id: number) => void;
@@ -28,12 +41,13 @@ interface TaskItemProps {
 export function TaskItem({ task, onComplete, onEdit, onDelete }: TaskItemProps) {
   const isCompleted = task.status === 'completed';
   const urlMeta = task.url ? parseUrl(task.url) : null;
-  const isContentTask = !!urlMeta;
+  const isPassive = task.intent === 'passive';
+  const intentStyle = intentStyles[task.intent];
 
   return (
     <div className={`border rounded-lg overflow-hidden ${isCompleted ? 'opacity-60' : ''}`}>
-      {/* YouTube thumbnail preview */}
-      {urlMeta?.type === 'youtube' && urlMeta.thumbnailUrl && !isCompleted && (
+      {/* YouTube thumbnail preview for passive tasks */}
+      {isPassive && urlMeta?.type === 'youtube' && urlMeta.thumbnailUrl && !isCompleted && (
         <a
           href={task.url!}
           target="_blank"
@@ -63,13 +77,16 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: TaskItemProps) 
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            <Badge className={`text-xs ${intentStyle.className}`}>
+              {intentStyle.icon} {intentStyle.label}
+            </Badge>
             <span className={isCompleted ? 'line-through text-muted-foreground' : 'font-medium'}>
               {task.title}
             </span>
             <Badge variant={priorityVariants[task.priority]} className="text-xs">
               {priorityLabels[task.priority]}
             </Badge>
-            {isContentTask && urlMeta.type !== 'youtube' && (
+            {isPassive && urlMeta && urlMeta.type !== 'youtube' && (
               <Badge variant="outline" className="text-xs gap-1">
                 <img
                   src={urlMeta.favicon}
@@ -92,7 +109,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: TaskItemProps) 
             {task.due_date && (
               <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
             )}
-            {task.url && urlMeta?.type !== 'youtube' && (
+            {isPassive && task.url && urlMeta?.type !== 'youtube' && (
               <a
                 href={task.url}
                 target="_blank"

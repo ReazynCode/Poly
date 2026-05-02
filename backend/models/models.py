@@ -32,6 +32,12 @@ class TaskPriority(str, enum.Enum):
     URGENT = "urgent"
 
 
+class TaskIntent(str, enum.Enum):
+    """Intent of the task - passive learning or active work."""
+    PASSIVE = "passive"  # Consuming content (watching, reading, listening)
+    WORK = "work"        # Active work (building, practicing, creating)
+
+
 class Domain(Base):
     """
     A learning domain represents a top-level area of knowledge.
@@ -84,7 +90,8 @@ class Task(Base):
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(Enum(TaskStatus), default=TaskStatus.PENDING)
-    url = Column(String(500), nullable=True)  # For learning content (YouTube, articles)
+    intent = Column(Enum(TaskIntent), default=TaskIntent.WORK)  # passive (consume) or work (do)
+    url = Column(String(500), nullable=True)  # For passive learning content (YouTube, articles)
     priority = Column(Enum(TaskPriority), default=TaskPriority.MEDIUM)
     due_date = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

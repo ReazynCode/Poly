@@ -56,6 +56,13 @@ export function ProjectFormDialog({
     }
   }, [open, project]);
 
+  // Check if form has actual changes (dirty tracking)
+  const hasChanges = isEditing
+    ? title.trim() !== project?.title ||
+      (description.trim() || null) !== (project?.description || null) ||
+      status !== project?.status
+    : true; // For new projects, always allow submit if title exists
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -124,13 +131,13 @@ export function ProjectFormDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !title.trim()}>
+            <Button type="submit" disabled={isSubmitting || !title.trim() || !hasChanges}>
               {isSubmitting
                 ? isEditing
                   ? 'Saving...'
                   : 'Creating...'
                 : isEditing
-                  ? 'Save Changes'
+                  ? hasChanges ? 'Save Changes' : 'No Changes'
                   : 'Create Project'}
             </Button>
           </DialogFooter>

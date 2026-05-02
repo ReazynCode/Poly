@@ -8,8 +8,8 @@ import { DeleteConfirmDialog } from '@/features/domains/components/DeleteConfirm
 import { TaskList } from '@/features/tasks/components/TaskList';
 import { TaskFormDialog } from '@/features/tasks/components/TaskFormDialog';
 import { useProject, useUpdateProject, useDeleteProject } from '@/hooks/useProjects';
-import { useTasksByProject, useCreateTask, useCompleteTask, useDeleteTask } from '@/hooks/useTasks';
-import type { ProjectStatus } from '@/types';
+import { useTasksByProject, useCreateTask, useUpdateTask, useCompleteTask, useDeleteTask } from '@/hooks/useTasks';
+import type { Task, ProjectStatus } from '@/types';
 
 const statusLabels: Record<ProjectStatus, string> = {
   active: 'Active',
@@ -26,12 +26,14 @@ export function ProjectDetailPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const { data: project, isLoading: projectLoading } = useProject(id);
   const { data: tasks, isLoading: tasksLoading } = useTasksByProject(id);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
   const completeTask = useCompleteTask();
   const deleteTask = useDeleteTask();
 
@@ -70,6 +72,24 @@ export function ProjectDetailPage() {
         onError: (err) => toast.error(err.message),
       }
     );
+  };
+
+  const handleUpdateTask = (data: Parameters<typeof createTask.mutate>[0]) => {
+    if (!editingTask || !project) return;
+    updateTask.mutate(
+      { id: editingTask.id, data: { ...data, project_id: id, domain_id: project.domain_id } },
+      {
+        onSuccess: () => {
+          setEditingTask(null);
+          toast.success('Task updated');
+        },
+        onError: (err) => toast.error(err.message),
+      }
+    );
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
   };
 
   const handleCompleteTask = (taskId: number) => {
@@ -136,6 +156,7 @@ export function ProjectDetailPage() {
         <TaskList
           tasks={tasks || []}
           onComplete={handleCompleteTask}
+          onEdit={handleEditTask}
           onDelete={handleDeleteTask}
         />
       )}
@@ -165,6 +186,16 @@ export function ProjectDetailPage() {
         projectId={id}
         domainId={project.domain_id}
         isSubmitting={createTask.isPending}
+      />
+
+      <TaskFormDialog
+        open={!!editingTask}
+        onOpenChange={(open) => !open && setEditingTask(null)}
+        onSubmit={handleUpdateTask}
+        task={editingTask || undefined}
+        projectId={id}
+        domainId={project.domain_id}
+        isSubmitting={updateTask.isPending}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 from enum import Enum
@@ -19,12 +19,19 @@ class TaskPriority(str, Enum):
     URGENT = "urgent"
 
 
+class TaskIntent(str, Enum):
+    """Task intent - passive learning or active work."""
+    PASSIVE = "passive"  # Consuming content (watching, reading, listening)
+    WORK = "work"        # Active work (building, practicing, creating)
+
+
 class TaskBase(BaseModel):
     """Base schema with shared task attributes."""
     title: str = Field(..., min_length=1, max_length=200, description="Task title")
     description: Optional[str] = Field(None, description="Task description")
     status: Optional[TaskStatus] = Field(TaskStatus.PENDING, description="Task status")
-    url: Optional[str] = Field(None, max_length=500, description="Learning content URL")
+    intent: Optional[TaskIntent] = Field(TaskIntent.WORK, description="Task intent - passive or work")
+    url: Optional[str] = Field(None, max_length=500, description="Learning content URL (for passive tasks)")
     priority: Optional[TaskPriority] = Field(TaskPriority.MEDIUM, description="Task priority")
     due_date: Optional[datetime] = Field(None, description="Task due date")
 
@@ -40,6 +47,7 @@ class TaskUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     status: Optional[TaskStatus] = None
+    intent: Optional[TaskIntent] = None
     url: Optional[str] = Field(None, max_length=500)
     priority: Optional[TaskPriority] = None
     due_date: Optional[datetime] = None

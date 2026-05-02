@@ -50,12 +50,14 @@ export interface ProjectUpdate {
 // Task Types
 export type TaskStatus = 'pending' | 'in_progress' | 'completed';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskIntent = 'passive' | 'work';
 
 export interface Task {
   id: number;
   title: string;
   description: string | null;
   status: TaskStatus;
+  intent: TaskIntent;
   priority: TaskPriority;
   url: string | null;
   due_date: string | null;
@@ -70,6 +72,7 @@ export interface TaskCreate {
   title: string;
   description?: string;
   status?: TaskStatus;
+  intent?: TaskIntent;
   priority?: TaskPriority;
   url?: string;
   due_date?: string;
@@ -81,6 +84,7 @@ export interface TaskUpdate {
   title?: string;
   description?: string;
   status?: TaskStatus;
+  intent?: TaskIntent;
   priority?: TaskPriority;
   url?: string;
   due_date?: string;

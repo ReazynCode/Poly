@@ -6,7 +6,7 @@ interface UrlMetadata {
   icon: string;
   favicon: string;
   thumbnailUrl?: string;
-  videoId?: string;
+  videoId?: string | null;
 }
 
 export function parseUrl(url: string): UrlMetadata | null {

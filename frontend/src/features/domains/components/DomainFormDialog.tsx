@@ -58,6 +58,13 @@ export function DomainFormDialog({
     }
   }, [open, domain]);
 
+  // Check if form has actual changes (dirty tracking)
+  const hasChanges = isEditing
+    ? name.trim() !== domain?.name ||
+      (description.trim() || null) !== (domain?.description || null) ||
+      color !== domain?.color
+    : true; // For new domains, always allow submit if name exists
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -127,13 +134,13 @@ export function DomainFormDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !name.trim()}>
+            <Button type="submit" disabled={isSubmitting || !name.trim() || !hasChanges}>
               {isSubmitting
                 ? isEditing
                   ? 'Saving...'
                   : 'Creating...'
                 : isEditing
-                  ? 'Save Changes'
+                  ? hasChanges ? 'Save Changes' : 'No Changes'
                   : 'Create Domain'}
             </Button>
           </DialogFooter>
